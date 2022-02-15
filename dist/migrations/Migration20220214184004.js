@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Migration20220213161316 = void 0;
+exports.Migration20220214184004 = void 0;
 const migrations_1 = require("@mikro-orm/migrations");
-class Migration20220213161316 extends migrations_1.Migration {
+class Migration20220214184004 extends migrations_1.Migration {
     async up() {
         this.addSql('create table "post" ("id" serial primary key, "created_at" timestamptz(0) not null, "updated_at" timestamptz(0) not null, "title" text not null);');
     }
@@ -10,5 +10,5 @@ class Migration20220213161316 extends migrations_1.Migration {
         this.addSql('drop table if exists "post" cascade;');
     }
 }
-exports.Migration20220213161316 = Migration20220213161316;
-//# sourceMappingURL=Migration20220213161316.js.map
+exports.Migration20220214184004 = Migration20220214184004;
+//# sourceMappingURL=Migration20220214184004.js.map

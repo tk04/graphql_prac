@@ -1,10 +1,26 @@
-import { Post } from "./entities/Post";
+import "reflect-metadata";
+import { PostResolver } from "./resolvers/post";
+import "reflect-metadata";
+import { HelloResolver } from "./resolvers/hello";
+// import { Post } from "./entities/Post";
 import { MikroORM } from "@mikro-orm/core";
 import mikroConfig from "./mikro-orm.config";
+import express from "express";
+import { ApolloServer } from "apollo-server-express";
+import { buildSchema } from "type-graphql";
 const main = async () => {
   const orm = await MikroORM.init(mikroConfig);
   await orm.getMigrator().up();
-  const post = orm.em.create(Post, { title: "Hello World" });
-  await orm.em.persistAndFlush(post);
+  const app = express();
+  const apolloServer = new ApolloServer({
+    schema: await buildSchema({
+      resolvers: [HelloResolver, PostResolver],
+      validate: false,
+    }),
+    context: () => ({ em: orm.em }),
+  });
+  await apolloServer.start();
+  apolloServer.applyMiddleware({ app });
+  app.listen(4000);
 };
 main();
