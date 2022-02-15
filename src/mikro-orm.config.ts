@@ -1,3 +1,4 @@
+import { User } from "./entities/User";
 import { MikroORM } from "@mikro-orm/core";
 import path from "path/posix";
 
@@ -11,6 +12,6 @@ export default {
   dbName: "lireddit",
   debug: true,
   type: "postgresql",
-  entities: [Post],
+  entities: [Post, User],
   allowGlobalContext: true,
 } as Parameters<typeof MikroORM.init>[0];
