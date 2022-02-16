@@ -4,6 +4,8 @@ import "reflect-metadata";
 import { PostResolver } from "./resolvers/post";
 import "reflect-metadata";
 import { HelloResolver } from "./resolvers/hello";
+import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
+
 // import { Post } from "./entities/Post";
 import { MikroORM } from "@mikro-orm/core";
 import mikroConfig from "./mikro-orm.config";
@@ -31,8 +33,8 @@ const main = async () => {
       cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
         httpOnly: true,
-        sameSite: "lax",
-        // secure: true // only works in https
+        sameSite: "none",
+        secure: true, // only works in https
       },
       saveUninitialized: false,
       secret: "kjhasdfkajhdfkajhdkjahdfkjadkfhb",
@@ -41,6 +43,7 @@ const main = async () => {
   );
 
   const apolloServer = new ApolloServer({
+    plugins: [ApolloServerPluginLandingPageGraphQLPlayground()],
     schema: await buildSchema({
       resolvers: [HelloResolver, PostResolver, UserResolver],
       validate: false,

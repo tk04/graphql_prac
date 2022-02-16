@@ -29,6 +29,7 @@
     "apollo-server-express": "^3.6.3",
     "argon2": "^0.28.4",
     "connect-redis": "^6.1.1",
+    "cors": "^2.8.5",
     "express": "^4.17.2",
     "express-session": "^1.17.2",
     "graphql": "15.3.0",

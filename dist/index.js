@@ -8,6 +8,7 @@ require("reflect-metadata");
 const post_1 = require("./resolvers/post");
 require("reflect-metadata");
 const hello_1 = require("./resolvers/hello");
+const apollo_server_core_1 = require("apollo-server-core");
 const core_1 = require("@mikro-orm/core");
 const mikro_orm_config_1 = __importDefault(require("./mikro-orm.config"));
 const express_1 = __importDefault(require("express"));
@@ -31,13 +32,15 @@ const main = async () => {
         cookie: {
             maxAge: 1000 * 60 * 60 * 24 * 365 * 10,
             httpOnly: true,
-            sameSite: "lax",
+            sameSite: "none",
+            secure: true,
         },
         saveUninitialized: false,
         secret: "kjhasdfkajhdfkajhdkjahdfkjadkfhb",
         resave: false,
     }));
     const apolloServer = new apollo_server_express_1.ApolloServer({
+        plugins: [(0, apollo_server_core_1.ApolloServerPluginLandingPageGraphQLPlayground)()],
         schema: await (0, type_graphql_1.buildSchema)({
             resolvers: [hello_1.HelloResolver, post_1.PostResolver, user_1.UserResolver],
             validate: false,
