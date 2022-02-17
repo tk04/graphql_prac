@@ -77,12 +77,12 @@ let UserResolver = class UserResolver {
                 ],
             };
         }
-        if (options.password.length <= 3) {
+        if (options.password.length < 3) {
             return {
                 errors: [
                     {
                         field: "password",
-                        message: "password must be at least 4 characters",
+                        message: "password must be at least 3 characters",
                     },
                 ],
             };

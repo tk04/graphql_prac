@@ -11,6 +11,7 @@ import {
 } from "type-graphql";
 import { User } from "../entities/User";
 import argon2 from "argon2";
+
 @InputType()
 class UsernamePasswordInput {
   @Field()
@@ -60,12 +61,12 @@ export class UserResolver {
         ],
       };
     }
-    if (options.password.length <= 3) {
+    if (options.password.length < 3) {
       return {
         errors: [
           {
             field: "password",
-            message: "password must be at least 4 characters",
+            message: "password must be at least 3 characters",
           },
         ],
       };
