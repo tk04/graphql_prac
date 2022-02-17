@@ -22,21 +22,21 @@ const main = async () => {
     await orm.getMigrator().up();
     const app = (0, express_1.default)();
     const RedisStore = (0, connect_redis_1.default)(express_session_1.default);
-    const redisClient = (0, redis_1.createClient)();
+    const redisClient = (0, redis_1.createClient)({ legacyMode: true });
+    await redisClient.connect();
     app.use((0, express_session_1.default)({
         name: "qid",
         store: new RedisStore({
-            client: redisClient,
             disableTouch: true,
+            client: redisClient,
         }),
         cookie: {
             maxAge: 1000 * 60 * 60 * 24 * 365 * 10,
             httpOnly: true,
-            sameSite: "none",
-            secure: true,
+            secure: false,
         },
         saveUninitialized: false,
-        secret: "kjhasdfkajhdfkajhdkjahdfkjadkfhb",
+        secret: "test",
         resave: false,
     }));
     const apolloServer = new apollo_server_express_1.ApolloServer({

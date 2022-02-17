@@ -22,22 +22,24 @@ const main = async () => {
   const app = express();
 
   const RedisStore = connectRedis(session);
-  const redisClient = createClient();
+  const redisClient = createClient({ legacyMode: true });
+
+  await redisClient.connect();
   app.use(
     session({
       name: "qid",
       store: new RedisStore({
-        client: redisClient,
         disableTouch: true,
+        client: redisClient,
       }),
       cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
         httpOnly: true,
-        sameSite: "none",
-        secure: true, // only works in https
+        // sameSite: "lax",
+        secure: false, // only works in https
       },
       saveUninitialized: false,
-      secret: "kjhasdfkajhdfkajhdkjahdfkjadkfhb",
+      secret: "test",
       resave: false,
     })
   );
