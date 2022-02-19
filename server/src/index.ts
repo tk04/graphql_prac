@@ -15,8 +15,10 @@ import { buildSchema } from "type-graphql";
 import { createClient } from "redis";
 import session from "express-session";
 import connectRedis from "connect-redis";
+import { sendEmail } from "./utils/sendEmail";
 
 const main = async () => {
+  sendEmail("bob@bob.com", "hello there");
   const orm = await MikroORM.init(mikroConfig);
   await orm.getMigrator().up();
   const app = express();
