@@ -91,7 +91,7 @@ let UserResolver = class UserResolver {
             : { username: usernameOrEmail });
         if (!user) {
             return {
-                errors: [{ field: "username", message: "username not found" }],
+                errors: [{ field: "usernameOrEmail", message: "username not found" }],
             };
         }
         const valid = await argon2_1.default.verify(user.password, password);
