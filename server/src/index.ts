@@ -1,24 +1,37 @@
-import { MyContext } from "src/types";
-import { UserResolver } from "./resolvers/user";
-import "reflect-metadata";
-import { PostResolver } from "./resolvers/post";
-import "reflect-metadata";
-import { HelloResolver } from "./resolvers/hello";
-import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
-
-// import { Post } from "./entities/Post";
+import "reflect-metadata"
 import { MikroORM } from "@mikro-orm/core";
-import mikroConfig from "./mikro-orm.config";
-import express from "express";
+import { ApolloServerPluginLandingPageGraphQLPlayground } from "apollo-server-core";
 import { ApolloServer } from "apollo-server-express";
-import { buildSchema } from "type-graphql";
-import { createClient } from "redis";
-import session from "express-session";
 import connectRedis from "connect-redis";
+import express from "express";
+import session from "express-session";
+import { createClient } from "redis";
+import "reflect-metadata";
+import { MyContext } from "src/types";
+import { buildSchema } from "type-graphql";
+import { createConnection } from "typeorm";
+import { Post } from "./entities/Post";
+import { User } from './entities/User';
+import mikroConfig from "./mikro-orm.config";
+import { HelloResolver } from "./resolvers/hello";
+import { PostResolver } from "./resolvers/post";
+import { UserResolver } from "./resolvers/user";
+
 
 const main = async () => {
-  const orm = await MikroORM.init(mikroConfig);
-  await orm.getMigrator().up();
+  const conn = await createConnection({
+    type: "postgres",
+    database: "lireddit2",
+    username: "postgres",
+    password: "postgres",
+    logging: true,
+    synchronize: true,
+    entities: [Post, User]
+  });
+  
+  
+  // const orm = await MikroORM.init(mikroConfig);
+  // await orm.getMigrator().up();
   const app = express();
 
   const RedisStore = connectRedis(session);
@@ -50,7 +63,7 @@ const main = async () => {
       resolvers: [HelloResolver, PostResolver, UserResolver],
       validate: false,
     }),
-    context: ({ req, res }): MyContext => ({ em: orm.em, req, res }),
+    context: ({ req, res }): MyContext => ({ req, res }),
   });
   await apolloServer.start();
   apolloServer.applyMiddleware({
