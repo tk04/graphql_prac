@@ -1,6 +1,6 @@
 import { Arg, Ctx, Field, InputType, Mutation, Query, Resolver, UseMiddleware } from "type-graphql";
 import { Post } from "./../entities/Post";
-import { isAuth } from "../middleware/isAuth"
+import { isAuth } from "../middleware/isAuth";
 
 @InputType()
 class PostInput {
