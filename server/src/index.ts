@@ -21,11 +21,11 @@ const main = async () => {
     database: "lireddit",
     username: "postgres",
     password: "postgres",
-    logging: true,
+    logging: true, 
     synchronize: true,
     entities: [Post, User]
   });
-  
+ 
   
   // const orm = await MikroORM.init(mikroConfig);
   // await orm.getMigrator().up();
