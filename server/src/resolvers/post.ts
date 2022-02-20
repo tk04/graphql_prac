@@ -1,6 +1,5 @@
+import { Arg, Mutation, Query, Resolver } from "type-graphql";
 import { Post } from "./../entities/Post";
-import { Arg, Ctx, Mutation, Query, Resolver } from "type-graphql";
-import { MyContext } from "src/types";
 
 @Resolver()
 export class PostResolver {
@@ -44,6 +43,7 @@ export class PostResolver {
     @Arg("id") id: number,
   ): Promise<boolean> {
     await Post.delete(id);
+
     return true;
   }
 }

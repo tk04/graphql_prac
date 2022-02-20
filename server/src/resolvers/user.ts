@@ -1,4 +1,3 @@
-import { validRegister } from "./../utils/validRegister";
 import argon2 from "argon2";
 import {
   Arg,
@@ -7,12 +6,13 @@ import {
   Mutation,
   ObjectType,
   Query,
-  Resolver,
+  Resolver
 } from "type-graphql";
-import { User } from "../entities/User";
-import { MyContext } from "./../types";
-import { UsernamePasswordInput } from "../utils/UsernamePasswordInput";
 import { getConnection } from "typeorm";
+import { User } from "../entities/User";
+import { UsernamePasswordInput } from "../utils/UsernamePasswordInput";
+import { MyContext } from "./../types";
+import { validRegister } from "./../utils/validRegister";
 
 @ObjectType()
 class FieldError {
@@ -62,7 +62,7 @@ export class UserResolver {
         password: hashedPassword,
         email: options.email
       }).returning("*").execute();    
-      user = result.raw;
+      user = result.raw[0];
     } catch (error) {
       if (error.code === "23505" || error.detail.includes("already exists")) {
         return {
@@ -89,8 +89,8 @@ export class UserResolver {
   ): Promise<UserResponse> {
     const user = await User.findOne(
       usernameOrEmail.includes("@")
-        ? { where: {email: usernameOrEmail }}
-        : { where: {username: usernameOrEmail }}
+        ?  {email: usernameOrEmail }
+        : {username: usernameOrEmail }
     );
     if (!user) {
       return {

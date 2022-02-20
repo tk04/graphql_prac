@@ -11,16 +11,26 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserResolver = void 0;
-const validRegister_1 = require("./../utils/validRegister");
 const argon2_1 = __importDefault(require("argon2"));
 const type_graphql_1 = require("type-graphql");
+const typeorm_1 = require("typeorm");
 const User_1 = require("../entities/User");
 const UsernamePasswordInput_1 = require("../utils/UsernamePasswordInput");
+const validRegister_1 = require("./../utils/validRegister");
 let FieldError = class FieldError {
 };
 __decorate([
@@ -48,60 +58,64 @@ UserResponse = __decorate([
     (0, type_graphql_1.ObjectType)()
 ], UserResponse);
 let UserResolver = class UserResolver {
-    async me({ req, em }) {
+    me({ req }) {
         if (!req.session.userId) {
             return null;
         }
-        const user = await em.findOne(User_1.User, { id: req.session.userId });
-        return user;
+        return User_1.User.findOne(req.session.userId);
     }
-    async register(options, { req, em }) {
-        const errors = (0, validRegister_1.validRegister)(options);
-        if (errors) {
-            return { errors };
-        }
-        const hashedPassword = await argon2_1.default.hash(options.password);
-        const user = em.create(User_1.User, {
-            username: options.username,
-            password: hashedPassword,
-            email: options.email,
+    register(options, { req }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const errors = (0, validRegister_1.validRegister)(options);
+            if (errors) {
+                return { errors };
+            }
+            const hashedPassword = yield argon2_1.default.hash(options.password);
+            let user;
+            try {
+                const result = yield (0, typeorm_1.getConnection)().createQueryBuilder().insert().into(User_1.User).values({
+                    username: options.username,
+                    password: hashedPassword,
+                    email: options.email
+                }).returning("*").execute();
+                user = result.raw[0];
+            }
+            catch (error) {
+                if (error.code === "23505" || error.detail.includes("already exists")) {
+                    return {
+                        errors: [
+                            {
+                                field: "username",
+                                message: "username already taken",
+                            },
+                        ],
+                    };
+                }
+                console.log("message: ", error.messsage);
+            }
+            req.session.userId = user.id;
+            return { user };
         });
-        try {
-            await em.persistAndFlush(user);
-        }
-        catch (error) {
-            if (error.code === "23505" || error.detail.includes("already exists")) {
+    }
+    login(usernameOrEmail, password, { req }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const user = yield User_1.User.findOne(usernameOrEmail.includes("@")
+                ? { email: usernameOrEmail }
+                : { username: usernameOrEmail });
+            if (!user) {
                 return {
-                    errors: [
-                        {
-                            field: "username",
-                            message: "username already taken",
-                        },
-                    ],
+                    errors: [{ field: "usernameOrEmail", message: "username not found" }],
                 };
             }
-            console.log("message: ", error.messsage);
-        }
-        req.session.userId = user.id;
-        return { user };
-    }
-    async login(usernameOrEmail, password, { em, req }) {
-        const user = await em.findOne(User_1.User, usernameOrEmail.includes("@")
-            ? { email: usernameOrEmail }
-            : { username: usernameOrEmail });
-        if (!user) {
-            return {
-                errors: [{ field: "usernameOrEmail", message: "username not found" }],
-            };
-        }
-        const valid = await argon2_1.default.verify(user.password, password);
-        if (!valid) {
-            return {
-                errors: [{ field: "password", message: "Incorrect password" }],
-            };
-        }
-        req.session.userId = user.id;
-        return { user };
+            const valid = yield argon2_1.default.verify(user.password, password);
+            if (!valid) {
+                return {
+                    errors: [{ field: "password", message: "Incorrect password" }],
+                };
+            }
+            req.session.userId = user.id;
+            return { user };
+        });
     }
     logout({ req, res }) {
         return new Promise((resolve) => req.session.destroy((err) => {
@@ -120,7 +134,7 @@ __decorate([
     __param(0, (0, type_graphql_1.Ctx)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", void 0)
 ], UserResolver.prototype, "me", null);
 __decorate([
     (0, type_graphql_1.Mutation)(() => UserResponse),

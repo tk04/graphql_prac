@@ -1,29 +1,45 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const user_1 = require("./resolvers/user");
-require("reflect-metadata");
-const post_1 = require("./resolvers/post");
-require("reflect-metadata");
-const hello_1 = require("./resolvers/hello");
 const apollo_server_core_1 = require("apollo-server-core");
-const core_1 = require("@mikro-orm/core");
-const mikro_orm_config_1 = __importDefault(require("./mikro-orm.config"));
-const express_1 = __importDefault(require("express"));
 const apollo_server_express_1 = require("apollo-server-express");
-const type_graphql_1 = require("type-graphql");
-const redis_1 = require("redis");
-const express_session_1 = __importDefault(require("express-session"));
 const connect_redis_1 = __importDefault(require("connect-redis"));
-const main = async () => {
-    const orm = await core_1.MikroORM.init(mikro_orm_config_1.default);
-    await orm.getMigrator().up();
+const express_1 = __importDefault(require("express"));
+const express_session_1 = __importDefault(require("express-session"));
+const redis_1 = require("redis");
+require("reflect-metadata");
+const type_graphql_1 = require("type-graphql");
+const typeorm_1 = require("typeorm");
+const Post_1 = require("./entities/Post");
+const User_1 = require("./entities/User");
+const hello_1 = require("./resolvers/hello");
+const post_1 = require("./resolvers/post");
+const user_1 = require("./resolvers/user");
+const main = () => __awaiter(void 0, void 0, void 0, function* () {
+    const conn = yield (0, typeorm_1.createConnection)({
+        type: "postgres",
+        database: "lireddit",
+        username: "postgres",
+        password: "postgres",
+        logging: true,
+        synchronize: true,
+        entities: [Post_1.Post, User_1.User]
+    });
     const app = (0, express_1.default)();
     const RedisStore = (0, connect_redis_1.default)(express_session_1.default);
     const redisClient = (0, redis_1.createClient)({ legacyMode: true });
-    await redisClient.connect();
+    yield redisClient.connect();
     app.use((0, express_session_1.default)({
         name: "qid",
         store: new RedisStore({
@@ -41,18 +57,18 @@ const main = async () => {
     }));
     const apolloServer = new apollo_server_express_1.ApolloServer({
         plugins: [(0, apollo_server_core_1.ApolloServerPluginLandingPageGraphQLPlayground)()],
-        schema: await (0, type_graphql_1.buildSchema)({
+        schema: yield (0, type_graphql_1.buildSchema)({
             resolvers: [hello_1.HelloResolver, post_1.PostResolver, user_1.UserResolver],
             validate: false,
         }),
-        context: ({ req, res }) => ({ em: orm.em, req, res }),
+        context: ({ req, res }) => ({ req, res }),
     });
-    await apolloServer.start();
+    yield apolloServer.start();
     apolloServer.applyMiddleware({
         app,
         cors: { origin: "http://localhost:3000", credentials: true },
     });
     app.listen(4000);
-};
+});
 main();
 //# sourceMappingURL=index.js.map
