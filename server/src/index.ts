@@ -9,24 +9,24 @@ import { MyContext } from "src/types";
 import { buildSchema } from "type-graphql";
 import { createConnection } from "typeorm";
 import { Post } from "./entities/Post";
-import { User } from './entities/User';
+import { User } from "./entities/User";
 import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
-
-
+import path from "path";
 const main = async () => {
   const conn = await createConnection({
     type: "postgres",
     database: "lireddit",
     username: "postgres",
     password: "postgres",
-    logging: true, 
+    logging: true,
     synchronize: true,
-    entities: [Post, User]
+    entities: [Post, User],
+    migrations: [path.join(__dirname, "./migrations/*")],
   });
- 
-  
+  await conn.runMigrations();
+
   // const orm = await MikroORM.init(mikroConfig);
   // await orm.getMigrator().up();
   const app = express();
