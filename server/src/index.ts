@@ -26,6 +26,7 @@ const main = async () => {
     migrations: [path.join(__dirname, "./migrations/*")],
   });
   await conn.runMigrations();
+  // await Post.delete({});
 
   // const orm = await MikroORM.init(mikroConfig);
   // await orm.getMigrator().up();

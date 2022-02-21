@@ -1,5 +1,16 @@
-import { QueryInput } from "@urql/exchange-graphcache";
-import { dedupExchange, Exchange, fetchExchange } from "urql";
+import {
+  Cache,
+  QueryInput,
+  ResolveInfo,
+  Resolver,
+  Variables,
+} from "@urql/exchange-graphcache";
+import {
+  dedupExchange,
+  Exchange,
+  fetchExchange,
+  stringifyVariables,
+} from "urql";
 import {
   LogoutMutation,
   MeQuery,
@@ -32,16 +43,35 @@ export interface PaginationParams {
   mergeMode?: MergeMode;
 }
 
-export const cursorPagination = () => {
+export const cursorPagination = (): Resolver => {
   return (_parent, fieldArgs, cache, info) => {
+    // console.log(_parent, fieldArgs, cache, info);
     const { parentKey: entityKey, fieldName } = info;
-
+    // console.log(info);
     const allFields = cache.inspectFields(entityKey);
+    console.log(allFields);
+    // // console.log(allFields);
     const fieldInfos = allFields.filter((info) => info.fieldName === fieldName);
+    // console.log(fieldInfos);
     const size = fieldInfos.length;
     if (size === 0) {
       return undefined;
     }
+    // info.partial = true; // mark as partial so urql knows to fetch from server
+    const inCache = cache.resolve(
+      entityKey,
+      `${fieldName},(${stringifyVariables(fieldArgs)})`
+    );
+    info.partial = !inCache;
+    console.log(inCache);
+    const results: string[] = [];
+
+    fieldInfos.forEach((fi) => {
+      const data = cache.resolve(entityKey, fi.fieldKey) as string[];
+      results.push(...data);
+    });
+
+    return results;
   };
 };
 //     const visited = new Set();
@@ -108,7 +138,7 @@ export const createUrqlClient = (ssrExchange: any) => ({
     cacheExchange({
       resolvers: {
         Query: {
-          posts: cursorPagination,
+          posts: cursorPagination(),
         },
       },
       updates: {
