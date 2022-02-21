@@ -296,5 +296,5 @@ Phasellus sit amet erat. Nulla tempus. Vivamus in felis eu sapien cursus vestibu
         `);
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {}
+  public async down(_: QueryRunner): Promise<void> {}
 }
