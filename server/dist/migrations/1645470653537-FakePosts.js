@@ -302,7 +302,7 @@ In sagittis dui vel nisl. Duis ac nibh. Fusce lacus purus, aliquet at, feugiat n
 insert into post (title, text, "creatorId", "createdAt") values ('Goldfish Memory', 'Curabitur in libero ut massa volutpat convallis. Morbi odio odio, elementum eu, interdum eu, tincidunt in, leo. Maecenas pulvinar lobortis est.
 
 Phasellus sit amet erat. Nulla tempus. Vivamus in felis eu sapien cursus vestibulum.', 6, '2022-01-30T07:59:47Z');
-`);
+ `);
         });
     }
     down(_) {

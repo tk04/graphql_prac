@@ -1,5 +1,7 @@
+import { PaginatedPosts } from "./../generated/graphql";
 import {
   Cache,
+  Entity,
   QueryInput,
   ResolveInfo,
   Resolver,
@@ -59,18 +61,29 @@ export const cursorPagination = (): Resolver => {
     }
     // info.partial = true; // mark as partial so urql knows to fetch from server
     const inCache = cache.resolve(
-      entityKey,
-      `${fieldName},(${stringifyVariables(fieldArgs)})`
+      cache.resolve(
+        entityKey,
+        `${fieldName},(${stringifyVariables(fieldArgs)})`
+      ) as Entity,
+      "posts"
     );
     info.partial = !inCache;
-    console.log(inCache);
+    // console.log(inCache);
     const results: string[] = [];
+    let hasMore = true;
     fieldInfos.forEach((fi) => {
-      const data = cache.resolve(entityKey, fi.fieldKey) as string[];
+      const key = cache.resolve(entityKey, fi.fieldKey);
+      const data = cache.resolve(key as Entity, "posts") as string[];
+      const _hasMore = cache.resolve(key as Entity, "hasMore");
+      if (!_hasMore) {
+        hasMore = _hasMore as boolean;
+      }
+
+      // console.log(data);
       results.push(...data);
     });
 
-    return results;
+    return { __typename: "PaginatedPosts", posts: results, hasMore };
   };
 };
 //     const visited = new Set();
@@ -135,6 +148,9 @@ export const createUrqlClient = (ssrExchange: any) => ({
   exchanges: [
     dedupExchange,
     cacheExchange({
+      keys: {
+        PaginatedPosts: () => null,
+      },
       resolvers: {
         Query: {
           posts: cursorPagination(),
