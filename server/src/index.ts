@@ -14,6 +14,7 @@ import { HelloResolver } from "./resolvers/hello";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
 import path from "path";
+import { Upvote } from "./entities/Upvote";
 const main = async () => {
   const conn = await createConnection({
     type: "postgres",
@@ -22,7 +23,7 @@ const main = async () => {
     password: "postgres",
     logging: true,
     synchronize: true,
-    entities: [Post, User],
+    entities: [Post, User, Upvote],
     migrations: [path.join(__dirname, "./migrations/*")],
   });
   await conn.runMigrations();

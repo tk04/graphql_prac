@@ -3,10 +3,12 @@ import {
   Arg,
   Ctx,
   Field,
+  FieldResolver,
   Mutation,
   ObjectType,
   Query,
-  Resolver
+  Resolver,
+  Root,
 } from "type-graphql";
 import { getConnection } from "typeorm";
 import { User } from "../entities/User";
@@ -29,15 +31,22 @@ class UserResponse {
   @Field(() => User, { nullable: true })
   user?: User;
 }
-@Resolver()
+@Resolver(User)
 export class UserResolver {
+  @FieldResolver()
+  email(@Root() user: User, @Ctx() { req }: MyContext) {
+    if (req.session.userId === user.id) {
+      return user.email;
+    }
+    return "";
+  }
+
   @Query(() => User, { nullable: true })
   me(@Ctx() { req }: MyContext) {
     if (!req.session.userId) {
       return null;
     }
-    return  User.findOne(req.session.userId);
-    
+    return User.findOne(req.session.userId);
   }
   @Mutation(() => UserResponse)
   async register(
@@ -57,11 +66,17 @@ export class UserResolver {
     // });
     let user;
     try {
-      const result = await getConnection().createQueryBuilder().insert().into(User).values({      
-        username: options.username,
-        password: hashedPassword,
-        email: options.email
-      }).returning("*").execute();    
+      const result = await getConnection()
+        .createQueryBuilder()
+        .insert()
+        .into(User)
+        .values({
+          username: options.username,
+          password: hashedPassword,
+          email: options.email,
+        })
+        .returning("*")
+        .execute();
       user = result.raw[0];
     } catch (error) {
       if (error.code === "23505" || error.detail.includes("already exists")) {
@@ -89,8 +104,8 @@ export class UserResolver {
   ): Promise<UserResponse> {
     const user = await User.findOne(
       usernameOrEmail.includes("@")
-        ?  {email: usernameOrEmail }
-        : {username: usernameOrEmail }
+        ? { email: usernameOrEmail }
+        : { username: usernameOrEmail }
     );
     if (!user) {
       return {
