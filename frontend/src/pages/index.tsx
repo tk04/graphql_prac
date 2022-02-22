@@ -20,7 +20,7 @@ const Index = () => {
     cursor: null as null | string,
   });
   const [{ data, fetching }] = usePostsQuery({ variables: variables });
-
+  console.log(fetching);
   if (!fetching && !data) {
     return <div>Your query failed</div>;
   }
