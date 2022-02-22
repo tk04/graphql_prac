@@ -40,6 +40,6 @@ export class User extends BaseEntity {
   @OneToMany(() => Post, (post) => post.creator)
   posts: Post[];
 
-  // @OneToMany(() => Upvote, (upvote) => upvote.user)
-  // upvotes: Upvote[];
+  @OneToMany(() => Upvote, (upvote) => upvote.user)
+  upvotes: Upvote[];
 }
