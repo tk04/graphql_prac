@@ -52,15 +52,21 @@ export class PostResolver {
     const userId = req.session.userId;
     const isUpvote = value !== -1;
     const realValue = isUpvote ? 1 : -1;
-    await Upvote.insert({ userId, postId, value: realValue });
+    // await Upvote.insert({ userId, postId, value: realValue });
 
     await getConnection().query(
       `
-    update post p
-    set p.points = p.points + $1
-    where p.id = $2
-    `,
-      [realValue, postId]
+    START TRANSACTION;
+
+    insert into upvote ("userId", "postId", value)
+    values (${userId}, ${postId}, ${realValue});
+
+    update post 
+    set points = points + ${realValue}
+    where id = ${postId};
+
+    COMMIT;
+    `
     );
 
     return true;
@@ -89,7 +95,7 @@ export class PostResolver {
       ) creator
     from post p
     inner join public.user u on u.id = p."creatorId"
-    ${cursor ? `where p.createdAt < $2` : ""}
+    ${cursor ? `where p."createdAt" < $2` : ""}
     order by p."createdAt" DESC
     limit $1
     `,

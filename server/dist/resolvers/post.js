@@ -26,7 +26,6 @@ const typeorm_1 = require("typeorm");
 const type_graphql_1 = require("type-graphql");
 const Post_1 = require("./../entities/Post");
 const isAuth_1 = require("../middleware/isAuth");
-const Upvote_1 = require("../entities/Upvote");
 let PostInput = class PostInput {
 };
 __decorate([
@@ -62,12 +61,18 @@ let PostResolver = class PostResolver {
             const userId = req.session.userId;
             const isUpvote = value !== -1;
             const realValue = isUpvote ? 1 : -1;
-            yield Upvote_1.Upvote.insert({ userId, postId, value: realValue });
             yield (0, typeorm_1.getConnection)().query(`
-    update post p
-    set p.points = p.points + $1
-    where p.id = $2
-    `, [realValue, postId]);
+    START TRANSACTION;
+
+    insert into upvote ("userId", "postId", value)
+    values (${userId}, ${postId}, ${realValue});
+
+    update post 
+    set points = points + ${realValue}
+    where id = ${postId};
+
+    COMMIT;
+    `);
             return true;
         });
     }
@@ -89,7 +94,7 @@ let PostResolver = class PostResolver {
       ) creator
     from post p
     inner join public.user u on u.id = p."creatorId"
-    ${cursor ? `where p.createdAt < $2` : ""}
+    ${cursor ? `where p."createdAt" < $2` : ""}
     order by p."createdAt" DESC
     limit $1
     `, replacements);
