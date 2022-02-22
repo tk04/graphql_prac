@@ -1,29 +1,21 @@
-import { PaginatedPosts } from "./../generated/graphql";
-import {
-  Cache,
-  Entity,
-  QueryInput,
-  ResolveInfo,
-  Resolver,
-  Variables,
-} from "@urql/exchange-graphcache";
+import { cacheExchange, Entity, Resolver } from "@urql/exchange-graphcache";
+import Router from "next/router";
 import {
   dedupExchange,
   Exchange,
   fetchExchange,
   stringifyVariables,
 } from "urql";
+import { pipe, tap } from "wonka";
 import {
-  LogoutMutation,
-  MeQuery,
-  MeDocument,
   LoginMutation,
+  LogoutMutation,
+  MeDocument,
+  MeQuery,
   RegisterMutation,
 } from "../generated/graphql";
+import { VoteMutationVariables } from "./../generated/graphql";
 import { tUpdateQuery } from "./tUpdateQuery";
-import { cacheExchange } from "@urql/exchange-graphcache";
-import { pipe, tap } from "wonka";
-import Router from "next/router";
 const errorExchange: Exchange =
   ({ forward }) =>
   (ops$) => {
@@ -36,7 +28,8 @@ const errorExchange: Exchange =
       })
     );
   };
-
+import { gql } from "@urql/core";
+// import gql from "graphql-tag";
 export type MergeMode = "before" | "after";
 
 export interface PaginationParams {
@@ -158,6 +151,33 @@ export const createUrqlClient = (ssrExchange: any) => ({
       },
       updates: {
         Mutation: {
+          vote: (_result, args, cache, info) => {
+            const { postId, value } = args as VoteMutationVariables;
+            const data = cache.readFragment(
+              gql`
+                fragment _ on Post {
+                  __typename
+                  id
+                  points
+                }
+              `,
+              { id: postId }
+            );
+            console.log("data", data);
+            if (data) {
+              const newPoints = (data.points as number) + value;
+              console.log(newPoints);
+              cache.writeFragment(
+                gql`
+                  fragment _ on Post {
+                    __typename
+                    points
+                  }
+                `,
+                { id: postId, points: newPoints }
+              );
+            }
+          },
           createPost: (_result, args, cache, info) => {
             const allFields = cache.inspectFields("Query");
             const fieldInfos = allFields.filter(

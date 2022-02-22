@@ -60,6 +60,10 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => Upvote_1.Upvote, (upvote) => upvote.post),
     __metadata("design:type", Array)
 ], Post.prototype, "upvotes", void 0);
+__decorate([
+    (0, type_graphql_1.Field)(() => type_graphql_1.Int, { nullable: true }),
+    __metadata("design:type", Object)
+], Post.prototype, "voteStatus", void 0);
 Post = __decorate([
     (0, type_graphql_1.ObjectType)(),
     (0, typeorm_1.Entity)()

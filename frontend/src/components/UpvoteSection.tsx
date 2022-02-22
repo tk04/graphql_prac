@@ -9,12 +9,14 @@ interface UpvoteSectionProps {
 
 const Upvotesection: React.FC<UpvoteSectionProps> = ({ post }) => {
   const [, vote] = useVoteMutation();
+  console.log(post);
   const [isLoading, setIsLoading] = useState<
     "not-loading" | "upvote-loading" | "downvote-loading"
   >("not-loading");
   return (
     <Flex direction="column" alignItems="center" justifyContent="center" mr={4}>
       <IconButton
+        colorScheme={post.voteStatus === 1 ? "green" : undefined}
         icon={<ChevronUpIcon />}
         aria-label="upvote post"
         isLoading={isLoading === "upvote-loading"}
@@ -27,6 +29,7 @@ const Upvotesection: React.FC<UpvoteSectionProps> = ({ post }) => {
       {post.points}
       <IconButton
         icon={<ChevronDownIcon />}
+        colorScheme={post.voteStatus === -1 ? "red" : undefined}
         aria-label="downvote post"
         isLoading={isLoading === "downvote-loading"}
         onClick={async () => {

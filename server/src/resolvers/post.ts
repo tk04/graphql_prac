@@ -59,7 +59,7 @@ export class PostResolver {
           `    
         update upvote
         set value = $1
-        where "postId = $2 and "userId" = $3
+        where "postId" = $2 and "userId" = $3
         `,
           [realValue, postId, userId]
         );
@@ -90,11 +90,16 @@ export class PostResolver {
   @Query(() => PaginatedPosts)
   async posts(
     @Arg("limit", () => Int) limit: number,
-    @Arg("cursor", () => String, { nullable: true }) cursor: string | null
+    @Arg("cursor", () => String, { nullable: true }) cursor: string | null,
+    @Ctx() { req }: MyContext
   ): Promise<PaginatedPosts> {
     const realLimit = Math.min(50, limit) + 1;
 
     const replacements: any[] = [realLimit];
+    console.log("USER SESSION", req.session.userId);
+    if (req.session.userId) {
+      replacements.push(req.session.userId);
+    }
     if (cursor) {
       replacements.push(new Date(parseInt(cursor)));
     }
@@ -107,10 +112,15 @@ export class PostResolver {
       'email', u.email,
       'createdAt', u."createdAt",
       'updatedAt', u."updatedAt"
-      ) creator
+      ) creator,
+    ${
+      req.session.userId
+        ? `(select value from upvote where "userId" = $2 and "postId" = p.id) "voteStatus"`
+        : 'null as "voteStatus"'
+    }
     from post p
     inner join public.user u on u.id = p."creatorId"
-    ${cursor ? `where p."createdAt" < $2` : ""}
+    ${cursor ? `where p."createdAt" < $3` : ""}
     order by p."createdAt" DESC
     limit $1
     `,
