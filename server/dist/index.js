@@ -47,16 +47,17 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     app.use((0, express_session_1.default)({
         name: "qid",
         store: new RedisStore({
-            disableTouch: true,
             client: redisClient,
+            disableTouch: true,
         }),
         cookie: {
             maxAge: 1000 * 60 * 60 * 24 * 365 * 10,
             httpOnly: true,
+            sameSite: "lax",
             secure: false,
         },
         saveUninitialized: false,
-        secret: "test",
+        secret: "hello secret",
         resave: false,
     }));
     const apolloServer = new apollo_server_express_1.ApolloServer({

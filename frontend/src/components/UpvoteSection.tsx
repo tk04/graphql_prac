@@ -9,7 +9,7 @@ interface UpvoteSectionProps {
 
 const Upvotesection: React.FC<UpvoteSectionProps> = ({ post }) => {
   const [, vote] = useVoteMutation();
-  console.log(post);
+  // console.log(post);
   const [isLoading, setIsLoading] = useState<
     "not-loading" | "upvote-loading" | "downvote-loading"
   >("not-loading");
@@ -21,6 +21,9 @@ const Upvotesection: React.FC<UpvoteSectionProps> = ({ post }) => {
         aria-label="upvote post"
         isLoading={isLoading === "upvote-loading"}
         onClick={async () => {
+          if (post.voteStatus === 1) {
+            return;
+          }
           setIsLoading("upvote-loading");
           await vote({ postId: post.id, value: 1 });
           setIsLoading("not-loading");
@@ -33,6 +36,9 @@ const Upvotesection: React.FC<UpvoteSectionProps> = ({ post }) => {
         aria-label="downvote post"
         isLoading={isLoading === "downvote-loading"}
         onClick={async () => {
+          if (post.voteStatus === -1) {
+            return;
+          }
           setIsLoading("downvote-loading");
           vote({ postId: post.id, value: -1 });
           setIsLoading("not-loading");

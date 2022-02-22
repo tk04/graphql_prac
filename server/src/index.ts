@@ -41,20 +41,38 @@ const main = async () => {
     session({
       name: "qid",
       store: new RedisStore({
-        disableTouch: true,
         client: redisClient,
+        disableTouch: true,
       }),
       cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
         httpOnly: true,
-        // sameSite: "lax",
-        secure: false, // only works in https
+        sameSite: "lax", // csrf
+        secure: false, // cookie only works in https
       },
       saveUninitialized: false,
-      secret: "test",
+      secret: "hello secret",
       resave: false,
     })
   );
+  // app.use(
+  //   session({
+  //     name: "qid",
+  //     store: new RedisStore({
+  //       disableTouch: true,
+  //       client: redisClient,
+  //     }),
+  //     cookie: {
+  //       maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
+  //       httpOnly: true,
+  //       sameSite: "lax",
+  //       secure: false, // only works in https
+  //     },
+  //     saveUninitialized: true,
+  //     secret: "test",
+  //     resave: false,
+  //   })
+  // );
 
   const apolloServer = new ApolloServer({
     plugins: [ApolloServerPluginLandingPageGraphQLPlayground()],

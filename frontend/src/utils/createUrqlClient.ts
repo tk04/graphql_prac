@@ -29,6 +29,7 @@ const errorExchange: Exchange =
     );
   };
 import { gql } from "@urql/core";
+import { isServer } from "./isServer";
 // import gql from "graphql-tag";
 export type MergeMode = "before" | "after";
 
@@ -44,7 +45,7 @@ export const cursorPagination = (): Resolver => {
     const { parentKey: entityKey, fieldName } = info;
     // console.log(info);
     const allFields = cache.inspectFields(entityKey);
-    console.log(allFields);
+    // console.log(allFields);
     // // console.log(allFields);
     const fieldInfos = allFields.filter((info) => info.fieldName === fieldName);
     // console.log(fieldInfos);
@@ -133,105 +134,116 @@ export const cursorPagination = (): Resolver => {
 //   };
 // };
 
-export const createUrqlClient = (ssrExchange: any) => ({
-  url: "http://localhost:4000/graphql",
-  fetchOptions: {
-    credentials: "include" as const,
-  },
-  exchanges: [
-    dedupExchange,
-    cacheExchange({
-      keys: {
-        PaginatedPosts: () => null,
+export const createUrqlClient = (ssrExchange: any, ctx: any) => {
+  return {
+    url: "http://localhost:4000/graphql",
+    fetchOptions: {
+      credentials: "include" as const,
+      headers: {
+        cookie: isServer() ? ctx.req.headers.cookie : "",
       },
-      resolvers: {
-        Query: {
-          posts: cursorPagination(),
+    },
+    exchanges: [
+      dedupExchange,
+      cacheExchange({
+        keys: {
+          PaginatedPosts: () => null,
         },
-      },
-      updates: {
-        Mutation: {
-          vote: (_result, args, cache, info) => {
-            const { postId, value } = args as VoteMutationVariables;
-            const data = cache.readFragment(
-              gql`
-                fragment _ on Post {
-                  __typename
-                  id
-                  points
-                }
-              `,
-              { id: postId }
-            );
-            console.log("data", data);
-            if (data) {
-              const newPoints = (data.points as number) + value;
-              console.log(newPoints);
-              cache.writeFragment(
+        resolvers: {
+          Query: {
+            posts: cursorPagination(),
+          },
+        },
+        updates: {
+          Mutation: {
+            vote: (_result, args, cache, info) => {
+              const { postId, value } = args as VoteMutationVariables;
+              const data = cache.readFragment(
                 gql`
                   fragment _ on Post {
                     __typename
+                    id
                     points
+                    voteStatus
                   }
                 `,
-                { id: postId, points: newPoints }
+                { id: postId }
               );
-            }
-          },
-          createPost: (_result, args, cache, info) => {
-            const allFields = cache.inspectFields("Query");
-            const fieldInfos = allFields.filter(
-              (info) => info.fieldName === "posts"
-            );
-            fieldInfos.forEach((fi) => {
-              cache.invalidate("Query", "posts", fi.arguments);
-            });
-          },
-          logout: (_result, args, cache, info) => {
-            tUpdateQuery<LogoutMutation, MeQuery>(
-              cache,
-              { query: MeDocument },
-              {},
-              () => ({ me: null })
-            );
-          },
-          login: (_result, args, cache, info) => {
-            tUpdateQuery<LoginMutation, MeQuery>(
-              cache,
-              { query: MeDocument },
-              _result,
-              (result, query) => {
-                if (result.login.errors) {
-                  return query;
-                } else {
-                  return {
-                    me: result.login.user,
-                  };
+              // console.log("data", data);
+              if (data) {
+                if (data.voteStatus === value) {
+                  return;
                 }
+                const newPoints =
+                  (data.points as number) + (!data.voteStatus ? 1 : 2) * value;
+                console.log(newPoints);
+                cache.writeFragment(
+                  gql`
+                    fragment _ on Post {
+                      __typename
+                      points
+                      voteStatus
+                    }
+                  `,
+                  { id: postId, points: newPoints, voteStatus: value }
+                );
               }
-            );
-          },
-          register: (_result, args, cache, info) => {
-            tUpdateQuery<RegisterMutation, MeQuery>(
-              cache,
-              { query: MeDocument },
-              _result,
-              (result, query) => {
-                if (result.register.errors) {
-                  return query;
-                } else {
-                  return {
-                    me: result.register.user,
-                  };
+            },
+            createPost: (_result, args, cache, info) => {
+              const allFields = cache.inspectFields("Query");
+              const fieldInfos = allFields.filter(
+                (info) => info.fieldName === "posts"
+              );
+              fieldInfos.forEach((fi) => {
+                cache.invalidate("Query", "posts", fi.arguments);
+              });
+            },
+            logout: (_result, args, cache, info) => {
+              tUpdateQuery<LogoutMutation, MeQuery>(
+                cache,
+                { query: MeDocument },
+                {},
+                () => ({ me: null })
+              );
+            },
+            login: (_result, args, cache, info) => {
+              tUpdateQuery<LoginMutation, MeQuery>(
+                cache,
+                { query: MeDocument },
+                _result,
+                (result, query) => {
+                  if (result.login.errors) {
+                    return query;
+                  } else {
+                    return {
+                      me: result.login.user,
+                    };
+                  }
                 }
-              }
-            );
+              );
+            },
+            register: (_result, args, cache, info) => {
+              tUpdateQuery<RegisterMutation, MeQuery>(
+                cache,
+                { query: MeDocument },
+                _result,
+                (result, query) => {
+                  if (result.register.errors) {
+                    return query;
+                  } else {
+                    return {
+                      me: result.register.user,
+                    };
+                  }
+                }
+              );
+            },
           },
         },
-      },
-    }),
-    errorExchange,
-    ssrExchange,
-    fetchExchange,
-  ],
-});
+      }),
+      errorExchange,
+      ssrExchange,
+      fetchExchange,
+    ],
+  };
+};
