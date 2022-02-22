@@ -52,22 +52,37 @@ export class PostResolver {
     const userId = req.session.userId;
     const isUpvote = value !== -1;
     const realValue = isUpvote ? 1 : -1;
+    const upvote = await Upvote.findOne({ where: { postId, userId } });
+    if (upvote && upvote.value !== realValue) {
+      await getConnection().transaction(async (tm) => {
+        await tm.query(
+          `    
+        update upvote
+        set value = $1
+        where "postId = $2 and "userId" = $3
+        `,
+          [realValue, postId, userId]
+        );
+
+        await tm.query(`   
+        update post 
+        set points = points + ${2 * realValue}
+        where id = ${postId};`);
+      });
+    } else if (!upvote) {
+      await getConnection().transaction(async (tm) => {
+        await tm.query(`    
+        insert into upvote ("userId", "postId", value)
+        values (${userId}, ${postId}, ${realValue});`);
+
+        await tm.query(`   
+        update post 
+        set points = points + ${realValue}
+        where id = ${postId};`);
+      });
+    }
+
     // await Upvote.insert({ userId, postId, value: realValue });
-
-    await getConnection().query(
-      `
-    START TRANSACTION;
-
-    insert into upvote ("userId", "postId", value)
-    values (${userId}, ${postId}, ${realValue});
-
-    update post 
-    set points = points + ${realValue}
-    where id = ${postId};
-
-    COMMIT;
-    `
-    );
 
     return true;
   }
