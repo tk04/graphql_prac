@@ -3,7 +3,6 @@ import {
   Button,
   Flex,
   Heading,
-  IconButton,
   Link,
   Stack,
   Text,
@@ -12,6 +11,7 @@ import { withUrqlClient } from "next-urql";
 import NextLink from "next/link";
 import { useState } from "react";
 import Layout from "../components/Layout";
+import PostFuncButtons from "../components/PostFuncButtons";
 import Upvotesection from "../components/UpvoteSection";
 import {
   useDeletePostMutation,
@@ -19,7 +19,6 @@ import {
   usePostsQuery,
 } from "../generated/graphql";
 import { createUrqlClient } from "../utils/createUrqlClient";
-import { DeleteIcon, EditIcon } from "@chakra-ui/icons";
 const Index = () => {
   const [{ data: meData }] = useMeQuery();
   const [, deletePost] = useDeletePostMutation();
@@ -52,36 +51,9 @@ const Index = () => {
                     <Text flex={1} mt={4}>
                       {p.textSnippet}
                     </Text>
-                    {meData?.me?.id === p.creator.id && (
-                      <Box ml="auto">
-                        <NextLink
-                          href="/post/edit/[id]"
-                          as={`/post/edit/${p.id}`}
-                        >
-                          <IconButton
-                            as={Link}
-                            mr={4}
-                            ml="auto"
-                            // bg="red"
-                            // color={"white"}
-                            icon={<EditIcon />}
-                            aria-label="edit post"
-                            // _hover={{ bg: "red.500" }}
-                          />
-                        </NextLink>
-                        <IconButton
-                          ml="auto"
-                          // bg="red"
-                          // color={"white"}
-                          icon={<DeleteIcon />}
-                          aria-label="delete post"
-                          // _hover={{ bg: "red.500" }}
-                          onClick={() => {
-                            deletePost({ id: p.id });
-                          }}
-                        />
-                      </Box>
-                    )}
+                    <Box ml="auto">
+                      <PostFuncButtons id={p.id} creatorId={p.creator.id} />
+                    </Box>
                   </Flex>
                 </Box>
               </Flex>

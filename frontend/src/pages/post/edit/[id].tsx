@@ -1,15 +1,15 @@
 import { Box, Button } from "@chakra-ui/react";
-import { Formik, Form } from "formik";
+import { Form, Formik } from "formik";
 import { withUrqlClient } from "next-urql";
-import { Router, useRouter } from "next/router";
+import { useRouter } from "next/router";
 import React from "react";
 import Inputfield from "../../../components/InputField";
 import Layout from "../../../components/Layout";
-import { usePostQuery } from "../../../generated/graphql";
+import {
+  usePostQuery,
+  useUpdatePostMutation,
+} from "../../../generated/graphql";
 import { createUrqlClient } from "../../../utils/createUrqlClient";
-import { useGetPost } from "../../../utils/useGetPost";
-import createPost from "../../create-post";
-import { useUpdatePostMutation } from "../../../generated/graphql";
 import { useGetIntid } from "../../../utils/useGetIntid";
 interface EditProps {}
 
@@ -40,13 +40,8 @@ const EditPost: React.FC<EditProps> = ({}) => {
       <Formik
         initialValues={{ title: data.post.title, text: data.post.text }}
         onSubmit={async (values, { setErrors }) => {
-          // console.log(values);
-          //   const { error } = await createPost({ input: values });
-          //   if (!error) {
-          //     router.push("/");
-          //   }
           await updatePost({ id: intId, ...values });
-          router.push("/");
+          router.back();
         }}
       >
         {({ isSubmitting }) => (
