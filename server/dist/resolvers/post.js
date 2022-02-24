@@ -135,30 +135,24 @@ let PostResolver = class PostResolver {
             return Post_1.Post.create(Object.assign(Object.assign({}, input), { creatorId: req.session.userId })).save();
         });
     }
-    updatePost(title, id) {
+    updatePost(title, text, id, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
-            const post = yield Post_1.Post.findOne(id);
-            if (!post) {
-                return null;
-            }
-            if (typeof title != "undefined") {
-                post.title = title;
-                yield Post_1.Post.update({ id }, { title });
-            }
-            return post;
+            const result = yield (0, typeorm_1.getConnection)()
+                .createQueryBuilder()
+                .update(Post_1.Post)
+                .set({ text, title })
+                .where('id = :id and "creatorId" = :creatorId ', {
+                id,
+                creatorId: req.session.userId,
+            })
+                .returning("*")
+                .execute();
+            return result.raw[0];
         });
     }
     deletePost(id, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
-            const post = yield Post_1.Post.findOne(id);
-            if (!post) {
-                return false;
-            }
-            else if (post.creatorId !== req.session.userId) {
-                throw new Error("Not authorized");
-            }
-            yield Upvote_1.Upvote.delete({ postId: id });
-            yield Post_1.Post.delete({ id });
+            yield Post_1.Post.delete({ id, creatorId: req.session.userId });
             return true;
         });
     }
@@ -207,10 +201,13 @@ __decorate([
 ], PostResolver.prototype, "createPost", null);
 __decorate([
     (0, type_graphql_1.Mutation)(() => Post_1.Post, { nullable: true }),
-    __param(0, (0, type_graphql_1.Arg)("title", () => String, { nullable: true })),
-    __param(1, (0, type_graphql_1.Arg)("id")),
+    (0, type_graphql_1.UseMiddleware)(isAuth_1.isAuth),
+    __param(0, (0, type_graphql_1.Arg)("title")),
+    __param(1, (0, type_graphql_1.Arg)("text")),
+    __param(2, (0, type_graphql_1.Arg)("id")),
+    __param(3, (0, type_graphql_1.Ctx)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Number]),
+    __metadata("design:paramtypes", [String, String, Number, Object]),
     __metadata("design:returntype", Promise)
 ], PostResolver.prototype, "updatePost", null);
 __decorate([
