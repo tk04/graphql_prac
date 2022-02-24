@@ -26,13 +26,6 @@ const Index = () => {
   }
   return (
     <Layout>
-      <Flex align="center">
-        <Heading>LiReddit</Heading>
-        <NextLink href="/create-post">
-          <Link ml="auto">Create Post</Link>
-        </NextLink>
-      </Flex>
-      <br />
       {data && (
         <Stack spacing={8}>
           {data.posts.posts.map((p) => (
